@@ -43,7 +43,7 @@
     
     self.recordTime = 0.0;
     [self setNeedsDisplay];
-
+    
 	AVAudioSession *audioSession = [AVAudioSession sharedInstance];
 	NSError *err = nil;
 	[audioSession setCategory :AVAudioSessionCategoryPlayAndRecord error:&err];
