@@ -36,6 +36,10 @@
 }
 
 - (void)startRecording {
+    if (![self canRecord]) {
+        return;
+    }
+    
     self.hidden = NO;
     [UIView animateWithDuration:0.4 animations:^{
         self.alpha = 1.0;
@@ -48,14 +52,14 @@
 	NSError *err = nil;
 	[audioSession setCategory :AVAudioSessionCategoryPlayAndRecord error:&err];
 	if(err){
-        NSLog(@"audioSession: %@ %d %@", [err domain], [err code], [[err userInfo] description]);
+        NSLog(@"audioSession: %@ %ld %@", [err domain], [err code], [[err userInfo] description]);
         return;
 	}
     
     err = nil;
 	[audioSession setActive:YES error:&err];
 	if(err){
-        NSLog(@"audioSession: %@ %d %@", [err domain], [err code], [[err userInfo] description]);
+        NSLog(@"audioSession: %@ %ld %@", [err domain], [err code], [[err userInfo] description]);
         return;
 	}
 	
@@ -79,7 +83,7 @@
 	err = nil;
 	_recorder = [[ AVAudioRecorder alloc] initWithURL:[NSURL fileURLWithPath:self.recordFilePath] settings:recordSetting error:&err];
 	if(!_recorder){
-        NSLog(@"recorder: %@ %d %@", [err domain], [err code], [[err userInfo] description]);
+        NSLog(@"recorder: %@ %ld %@", [err domain], [err code], [[err userInfo] description]);
         return;
 	}
 	
@@ -103,6 +107,34 @@
         self.hidden = YES;
     }];
     [self setNeedsDisplay];
+}
+
+-(BOOL)canRecord
+{
+    __block BOOL bCanRecord = YES;
+    if ([[[UIDevice currentDevice] systemVersion] compare:@"7.0"] != NSOrderedAscending)
+    {
+        AVAudioSession *audioSession = [AVAudioSession sharedInstance];
+        if ([audioSession respondsToSelector:@selector(requestRecordPermission:)]) {
+            [audioSession performSelector:@selector(requestRecordPermission:) withObject:^(BOOL granted) {
+                if (granted) {
+                    bCanRecord = YES;
+                }
+                else {
+                    bCanRecord = NO;
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [[[UIAlertView alloc] initWithTitle:@"无法录音"
+                                                     message:@"请在IPHONE设置-隐私-麦克风选项中，允许<APPNAME>访问手机麦克风"
+                                                    delegate:nil
+                                           cancelButtonTitle:@"好的"
+                                           otherButtonTitles:nil] show];
+                    });
+                }
+            }];
+        }
+    }
+    
+    return bCanRecord;
 }
 
 - (void)updateMeters {
