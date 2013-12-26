@@ -5,6 +5,7 @@
 #define HUD_WIDTH               260
 #define HUD_HEIGHT              200
 #define WAVE_UPDATE_FREQUENCY   0.05
+#define RECORD_MAX_TIME         60
 
 @interface KVoiceHUD () <AVAudioRecorderDelegate>
 
@@ -91,7 +92,7 @@
 	[_recorder prepareToRecord];
 	_recorder.meteringEnabled = YES;
 	
-	[_recorder recordForDuration:(NSTimeInterval)20];
+	[_recorder recordForDuration:(NSTimeInterval)RECORD_MAX_TIME];
 	_timer = [NSTimer scheduledTimerWithTimeInterval:WAVE_UPDATE_FREQUENCY target:self selector:@selector(updateMeters) userInfo:nil repeats:YES];
 }
 
