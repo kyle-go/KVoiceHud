@@ -5,7 +5,6 @@
 #define HUD_WIDTH               260
 #define HUD_HEIGHT              200
 #define WAVE_UPDATE_FREQUENCY   0.05
-#define RECORD_MAX_TIME         60
 
 @interface KVoiceHUD () <AVAudioRecorderDelegate>
 
@@ -16,6 +15,8 @@
     CGRect          _showRect;
 	AVAudioRecorder *_recorder;
 	NSTimer         *_timer;
+    CGFloat         _maxRecordTime;
+    NSString        *_tips;
 }
 
 - (id)initWithParentView:(UIView *)view
@@ -30,6 +31,7 @@
         
         //音量0~7, 共8个等级
         _voiceLevel = 0;
+        _maxRecordTime = 60;
         
         _showRect = CGRectMake(self.center.x - (HUD_WIDTH / 2), self.center.y - (HUD_HEIGHT / 2), HUD_WIDTH, HUD_HEIGHT);
     }
@@ -92,7 +94,7 @@
 	[_recorder prepareToRecord];
 	_recorder.meteringEnabled = YES;
 	
-	[_recorder recordForDuration:(NSTimeInterval)RECORD_MAX_TIME];
+	[_recorder recordForDuration:(NSTimeInterval)_maxRecordTime];
 	_timer = [NSTimer scheduledTimerWithTimeInterval:WAVE_UPDATE_FREQUENCY target:self selector:@selector(updateMeters) userInfo:nil repeats:YES];
 }
 
@@ -107,6 +109,7 @@
     } completion:^(BOOL finished) {
         self.hidden = YES;
     }];
+    
     [self setNeedsDisplay];
 }
 
@@ -142,7 +145,6 @@
     [_recorder updateMeters];
     
     CGFloat voice = [_recorder averagePowerForChannel:0];
-    //NSLog(@"meter:%5f", voice);
     
     //-56   0
     //-48   1
@@ -153,9 +155,16 @@
         voice = 56.0;
     }
     _voiceLevel = 7 - voice/8;
-    //NSLog(@"voiceProgress = %d", voiceProgress);
+    //NSLog(@"voiceLevel = %d", voiceProgress);
     
     self.recordTime += WAVE_UPDATE_FREQUENCY;
+    //超过最长时间停止录音
+    if (self.recordTime >= _maxRecordTime) {
+        _voiceLevel = 0;
+        [_timer invalidate];
+        [_recorder stop];
+    }
+    
     [self setNeedsDisplay];
 }
 
@@ -201,9 +210,40 @@
     }
     CGContextStrokePath(context);
     
+    //draw tips
+#ifdef __IPHONE_7_0
+    if ([_tips respondsToSelector:@selector(drawInRect:withAttributes:)]) {
+        NSMutableParagraphStyle *paraStyle = [[NSMutableParagraphStyle alloc] init];
+        [paraStyle setLineBreakMode:NSLineBreakByWordWrapping];
+        [paraStyle setAlignment:NSTextAlignmentCenter];
+        
+        NSDictionary *dic = [NSDictionary dictionaryWithObjectsAndKeys:
+                            [UIFont systemFontOfSize:16.0], NSFontAttributeName,
+                            [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.4], NSForegroundColorAttributeName,
+                            paraStyle, NSParagraphStyleAttributeName, nil];
+        
+        [_tips drawInRect:CGRectInset(_showRect, 0, 20) withAttributes:dic];
+    }
+#else
+    [_tips drawInRect:CGRectInset(_showRect, 0, 20) withFont:[UIFont systemFontOfSize:16.0] lineBreakMode:NSLineBreakByWordWrapping alignment:NSTextAlignmentCenter];
+#endif
+
     //draw microphone
     UIImage *imgMicrophone = [UIImage imageNamed:@"micro"];
     [imgMicrophone drawAtPoint:CGPointMake(_showRect.origin.x + _showRect.size.width/2 - imgMicrophone.size.width/2 - 50, _showRect.origin.y + _showRect.size.height/2 - imgMicrophone.size.height/2 + 10)];
+}
+
+#pragma mark -- 可选设置 ----
+- (void)setMaxRecordTime:(CGFloat)maxRecordTime
+{
+    if (maxRecordTime > 0) {
+        _maxRecordTime = maxRecordTime;
+    }
+}
+
+- (void)setTips:(NSString *)tips
+{
+    _tips = tips;
 }
 
 @end

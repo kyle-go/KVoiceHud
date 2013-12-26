@@ -32,6 +32,9 @@
     [_button addTarget:self action:@selector(recordEnd) forControlEvents:UIControlEventTouchUpInside];
     // Set record cancel action for UIControlEventTouchUpOutside
     [_button addTarget:self action:@selector(recordCancel) forControlEvents:UIControlEventTouchUpOutside];
+    
+    [_button addTarget:self action:@selector(recordDragInSide) forControlEvents:UIControlEventTouchDragInside];
+    [_button addTarget:self action:@selector(recordDragOutSide) forControlEvents:UIControlEventTouchDragOutside];
 }
 
 - (void)didReceiveMemoryWarning
@@ -42,6 +45,7 @@
 
 -(void) recordStart
 {
+    [_voiceHud setTips:@"上滑动手指, 取消发送"];
     [_voiceHud startRecording];
 }
 
@@ -55,6 +59,16 @@
 {
     [_voiceHud endRecording];
     NSLog(@"取消了！！");
+}
+
+- (void)recordDragOutSide
+{
+    [_voiceHud setTips:@"松开手指, 取消发送"];
+}
+
+- (void)recordDragInSide
+{
+    [_voiceHud setTips:@"上滑手指, 取消发送"];
 }
 
 @end
