@@ -14,6 +14,7 @@
 //最长录音时间，默认60秒
 - (void)setMaxRecordTime:(CGFloat)maxRecordTime;
 - (void)setTips:(NSString *)tips;
+- (BOOL)playRecord:(NSString *)recordFile completion:(void(^)(void))completion;
 
 @end
 

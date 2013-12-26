@@ -71,4 +71,12 @@
     [_voiceHud setTips:@"上滑手指, 取消发送"];
 }
 
+- (IBAction)playRecord:(id)sender {
+    [_voiceHud playRecord:_voiceHud.recordFilePath completion:^{
+    
+        UIAlertView *view = [[UIAlertView alloc] initWithTitle:nil message:@"播放完了..." delegate:nil cancelButtonTitle:@"好的" otherButtonTitles:nil];
+        [view show];
+    }];
+}
+
 @end

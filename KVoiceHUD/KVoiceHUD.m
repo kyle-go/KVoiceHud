@@ -6,7 +6,7 @@
 #define HUD_HEIGHT              200
 #define WAVE_UPDATE_FREQUENCY   0.05
 
-@interface KVoiceHUD () <AVAudioRecorderDelegate>
+@interface KVoiceHUD () <AVAudioRecorderDelegate, AVAudioPlayerDelegate>
 
 @end
 
@@ -17,6 +17,9 @@
 	NSTimer         *_timer;
     CGFloat         _maxRecordTime;
     NSString        *_tips;
+    
+    AVAudioPlayer *_audioPlayer;
+    void(^_palyRecordCompletion)(void);
 }
 
 - (id)initWithParentView:(UIView *)view
@@ -32,7 +35,7 @@
         //音量0~7, 共8个等级
         _voiceLevel = 0;
         _maxRecordTime = 60;
-        
+        _palyRecordCompletion = ^{};
         _showRect = CGRectMake(self.center.x - (HUD_WIDTH / 2), self.center.y - (HUD_HEIGHT / 2), HUD_WIDTH, HUD_HEIGHT);
     }
     return self;
@@ -244,6 +247,56 @@
 - (void)setTips:(NSString *)tips
 {
     _tips = tips;
+}
+
+
+- (BOOL)playRecord:(NSString *)recordFile completion:(void(^)(void))completion
+{
+    _palyRecordCompletion = ^{};
+    NSError *error = nil;
+    NSData *fileData = [NSData dataWithContentsOfFile:recordFile options:NSDataReadingMapped error:&error];
+    
+    if (!fileData || error) {
+        NSLog(@"文件不存在!");
+        return NO;
+    }
+    
+    AVAudioSession *audioSession = [AVAudioSession sharedInstance];
+    [audioSession setCategory:AVAudioSessionCategoryPlayback error:nil];
+    [audioSession setActive:YES error:nil];
+    error = nil;
+    
+    if ([_audioPlayer isPlaying]) {
+        [_audioPlayer stop];
+    }
+    _audioPlayer = [[AVAudioPlayer alloc] initWithData:fileData error:&error];
+    
+    if (_audioPlayer) {
+        _audioPlayer.delegate = self;
+        if (completion) {
+            _palyRecordCompletion = completion;
+        }
+        if ([_audioPlayer prepareToPlay] == YES && [_audioPlayer play] == YES) {
+            NSLog(@"正在播放...");
+            return YES;
+        } else {
+            NSLog(@"不能播放此文件!");
+            return NO;
+        }
+    } else {
+        NSLog(@"不能播放此文件!");
+        return NO;
+    }
+}
+
+- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag
+{
+    _palyRecordCompletion();
+}
+
+- (void)audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error
+{
+    _palyRecordCompletion();
 }
 
 @end
