@@ -107,7 +107,7 @@
     _recorder = nil;
     _timer = nil;
     
-    [UIView animateWithDuration:0.2 animations:^{
+    [UIView animateWithDuration:0.3 animations:^{
         self.alpha = 0.0;
     } completion:^(BOOL finished) {
         self.hidden = YES;

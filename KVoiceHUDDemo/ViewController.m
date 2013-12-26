@@ -58,6 +58,8 @@
 -(void) recordCancel
 {
     [_voiceHud endRecording];
+    NSError *error;
+    [[NSFileManager defaultManager] removeItemAtPath:_voiceHud.recordFilePath error:&error];
     NSLog(@"取消了！！");
 }
 
@@ -74,6 +76,7 @@
 - (IBAction)playRecord:(id)sender {
     [_voiceHud playRecord:_voiceHud.recordFilePath completion:^{
     
+        [_voiceHud endRecording];
         UIAlertView *view = [[UIAlertView alloc] initWithTitle:nil message:@"播放完了..." delegate:nil cancelButtonTitle:@"好的" otherButtonTitles:nil];
         [view show];
     }];
