@@ -45,7 +45,7 @@
 
 -(void) recordStart
 {
-    [_voiceHud setTips:@"上滑动手指, 取消发送"];
+    [_voiceHud setTips:@"上滑手指, 取消发送"];
     [_voiceHud startRecording];
 }
 
